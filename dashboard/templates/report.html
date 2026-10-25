@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>QA Report - run {{ run['id'] }}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#222}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:.4rem;text-align:left}
+pre{background:#111;color:#e6e6e6;padding:1rem;border-radius:6px;white-space:pre-wrap}
+img{max-width:100%;border:1px solid #ccc}.f{color:#b42318}.p{color:#1e7a43}</style></head><body>
+<h1>QA Test Report — Run #{{ run['id'] }}</h1>
+<p>Started {{ run['started_at'] }} · Duration {{ run['duration'] }}s · Scope {{ run['scope'] }}{% if run['bugs'] %} · defects simulated{% endif %}</p>
+<p><b>Total</b> {{ run['total'] }} · <span class="p">Passed {{ run['passed'] }}</span> · <span class="f">Failed {{ run['failed'] }}</span> · Skipped {{ run['skipped'] }} · Pass rate {{ '%.2f'|format(rate) }}%</p>
+<pre>{{ console }}</pre>
+<h2>Results</h2>
+<table><tr><th>ID</th><th>Suite</th><th>Test</th><th>Status</th></tr>
+{% for r in results %}<tr><td>{{ r.tc_id }}</td><td>{{ r.suite }}</td><td>{{ r.name }}</td><td>{{ r.status }}</td></tr>{% endfor %}</table>
+<h2>Failures</h2>
+{% for r in results if r.status in ('failed','error') %}
+<h3>{{ r.tc_id }} — {{ r.name }}</h3>
+<table><tr><th>Expected</th><td>{{ r.expected }}</td></tr><tr><th>Actual</th><td>{{ r.actual }}</td></tr>
+<tr><th>Reason</th><td>{{ r.reason }}</td></tr><tr><th>Severity / Category</th><td>{{ r.severity }} / {{ r.category }}</td></tr>
+<tr><th>Timestamp</th><td>{{ r.timestamp }}</td></tr>
+<tr><th>Suggestion ({{ r.suggestion_source }}, hypothesis only)</th><td>{{ r.suggestion }}</td></tr></table>
+{% if shots.get(r.id) %}<p><img src="{{ shots[r.id] }}" alt="screenshot"></p>{% endif %}
+{% else %}<p>No failures.</p>{% endfor %}
+</body></html>

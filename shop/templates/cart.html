@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Cart - ShopEasy{% endblock %}
+{% block content %}
+<h2>Your cart</h2>
+{% if lines %}
+<table id="cart-table">
+  <tr><th>Product</th><th>Qty</th><th>Subtotal</th><th></th></tr>
+  {% for l in lines %}
+  <tr class="cart-row">
+    <td class="cart-name">{{ l.product.name }}</td>
+    <td class="cart-qty">{{ l.qty }}</td>
+    <td>₹{{ "{:,}".format(l.subtotal) }}</td>
+    <td><form method="post" action="{{ url_for('remove_from_cart', pid=l.product.id) }}" class="inline">
+      <button class="remove-btn" type="submit">Remove</button></form></td>
+  </tr>
+  {% endfor %}
+</table>
+<p id="cart-total">Total: ₹{{ "{:,}".format(total) }}</p>
+<a id="checkout-link" href="{{ url_for('checkout') }}">Proceed to checkout</a>
+{% else %}
+<p id="cart-empty">Your cart is empty.</p>
+{% endif %}
+{% endblock %}

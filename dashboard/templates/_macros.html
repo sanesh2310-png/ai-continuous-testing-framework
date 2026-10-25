@@ -1,0 +1,24 @@
+{% macro badge(status) %}
+<span class="badge {{ status|lower|replace(' ', '-') }}">{{ status }}</span>
+{% endmacro %}
+
+{% macro failure_card(f, shot=None) %}
+<div class="card failure">
+  <h3>{{ f.tc_id }} — {{ f.name }} {{ badge(f.status|capitalize) }}</h3>
+  <table class="kv">
+    <tr><th>Expected</th><td>{{ f.expected or '—' }}</td></tr>
+    <tr><th>Actual</th><td>{{ f.actual or '—' }}</td></tr>
+    <tr><th>Failure reason</th><td>{{ f.reason or '—' }}</td></tr>
+    <tr><th>Severity</th><td>{{ f.severity or '—' }}</td></tr>
+    <tr><th>Category</th><td>{{ f.category or '—' }}</td></tr>
+    <tr><th>Timestamp</th><td>{{ f.timestamp }}</td></tr>
+    <tr><th>Suggested action</th><td>{{ f.suggestion }}
+      <div class="note">{{ f.suggestion_source }} suggestion — a hypothesis, not a confirmed diagnosis.
+      A failing test can also mean the test or environment is wrong.</div></td></tr>
+  </table>
+  {% if f.screenshot %}
+    <a href="{{ url_for('screenshot', rel=f.screenshot) }}" target="_blank">
+      <img class="shot" src="{{ shot or url_for('screenshot', rel=f.screenshot) }}" alt="Failure screenshot"></a>
+  {% endif %}
+</div>
+{% endmacro %}

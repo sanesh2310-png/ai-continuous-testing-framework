@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Products - ShopEasy{% endblock %}
+{% block content %}
+<h2>Products</h2>
+<form method="get" action="{{ url_for('products') }}" id="search-form" class="inline">
+  <input id="search-input" name="q" type="text" placeholder="Search products" value="{{ q }}">
+  <button id="search-btn" type="submit">Search</button>
+</form>
+<p id="result-count">{{ products|length }} product(s) found</p>
+<ul id="product-list">
+  {% for p in products %}
+  <li class="product" data-id="{{ p.id }}">
+    <span class="product-name">{{ p.name }}</span>
+    <span class="product-price">₹{{ "{:,}".format(p.price) }}</span>
+    <form method="post" action="{{ url_for('add_to_cart', pid=p.id) }}" class="inline">
+      <input type="hidden" name="q" value="{{ q }}">
+      <button class="add-to-cart" type="submit" data-name="{{ p.name }}">Add to cart</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

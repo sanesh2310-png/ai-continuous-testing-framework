@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, failure_card %}
+{% block title %}Test Execution - QA Dashboard{% endblock %}
+{% block content %}
+<section class="page-head"><h2>Test Execution</h2>
+<p>Run the Selenium UI tests and API tests against ShopEasy and inspect every result.</p></section>
+<div class="card">
+  <form method="post" action="/run" class="runform">
+    <label>Scope
+      <select name="scope">
+        <option value="all">All tests (UI + API + generated)</option>
+        <option value="api">API tests only (fast, no browser)</option>
+        <option value="ui">UI tests only (Selenium)</option>
+      </select></label>
+    <label>Browser
+      <select name="browser">
+        <option value="chrome" {{ 'selected' if browser == 'chrome' }}>Chrome{{ '' if browsers.chrome else ' (not found)' }}</option>
+        <option value="firefox" {{ 'selected' if browser == 'firefox' }}>Firefox{{ '' if browsers.firefox else ' (not found)' }}</option>
+      </select></label>
+    <label class="check"><input type="checkbox" name="bugs"> Simulate defects (checkout address validation + API login)</label>
+    <button class="btn primary" {% if running %}disabled{% endif %}>▶ Run tests</button>
+  </form>
+  {% if not (browsers.chrome or browsers.firefox) %}<p class="warn-text">No browser detected: UI tests will report an environment error. Install Google Chrome, or choose “API tests only”.</p>{% endif %}
+</div>
+
+{% if run and run['status'] == 'running' %}
+<div class="card running" id="running" data-run="{{ run['id'] }}"><span class="spinner"></span>
+  <div><b>Run #{{ run['id'] }} is running…</b><br><span class="muted">UI tests take about a minute. This page refreshes automatically when the run finishes.</span></div></div>
+{% elif run and run['status'] == 'error' %}
+<div class="card failure"><b>Run #{{ run['id'] }} could not complete.</b><pre>{{ run['output'] }}</pre></div>
+{% elif run %}
+<div class="card">
+  <h3>Run #{{ run['id'] }} · {{ run['started_at'] }}</h3>
+  <pre class="console">{{ console }}</pre>
+</div>
+<div class="card">
+  <h3>All results</h3>
+  <table><tr><th>ID</th><th>Suite</th><th>Test</th><th>Result</th><th>Time</th></tr>
+    {% for r in results %}<tr><td>{{ r.tc_id }}</td><td>{{ r.suite }}</td><td>{{ r.name }}</td>
+      <td>{{ badge(r.status|capitalize) }}</td><td>{{ '%.2f'|format(r.duration) }}s</td></tr>{% endfor %}
+  </table>
+</div>
+{% if failures %}<h3>Failed tests ({{ failures|length }})</h3>
+  {% for f in failures %}{{ failure_card(f) }}{% endfor %}{% endif %}
+{% else %}<div class="card empty">No runs yet. Choose a scope and click <b>Run tests</b>.</div>{% endif %}
+{% endblock %}

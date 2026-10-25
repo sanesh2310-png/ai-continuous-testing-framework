@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Checkout - ShopEasy{% endblock %}
+{% block content %}
+<h2>Checkout</h2>
+<p id="order-total">Order total: ₹{{ "{:,}".format(total) }}</p>
+<form method="post" id="checkout-form" novalidate>
+  <label for="full-name">Full name</label>
+  <input id="full-name" name="full_name" type="text">
+  <label for="address">Delivery address</label>
+  <input id="address" name="address" type="text">
+  <button id="place-order-btn" type="submit">Place order</button>
+</form>
+{% endblock %}

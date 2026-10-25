@@ -1,0 +1,13 @@
+body{font-family:system-ui,sans-serif;max-width:680px;margin:2rem auto;padding:0 1rem;color:#222}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd;flex-wrap:wrap}
+nav a,nav span{margin-left:1rem;font-size:.9rem}
+label{display:block;margin-top:.75rem}
+input{padding:.4rem;width:100%;box-sizing:border-box}
+form.inline{display:inline}form.inline input{width:60%}
+button{padding:.4rem .8rem;margin-top:.5rem;cursor:pointer}
+.flash{padding:.6rem;margin:1rem 0;border-radius:4px}
+.flash.error{background:#fde8e8;color:#9b1c1c}.flash.success{background:#e6f6ea;color:#1e6b34}
+ul{list-style:none;padding:0}li.product{padding:.5rem 0;border-bottom:1px solid #eee}
+.product-name{display:inline-block;min-width:240px}.product-price{display:inline-block;min-width:90px}
+table{width:100%;border-collapse:collapse}td,th{padding:.4rem;border-bottom:1px solid #eee;text-align:left}
+.hint{color:#777;font-size:.85rem}

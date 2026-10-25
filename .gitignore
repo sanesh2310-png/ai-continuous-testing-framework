@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+*.db
+reports/
+.pytest_cache/
+node_modules/
+.env
+tests/generated/test_generated_cases.py

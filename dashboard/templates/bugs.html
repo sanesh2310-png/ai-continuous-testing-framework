@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import failure_card %}
+{% block title %}Bug Analysis - QA Dashboard{% endblock %}
+{% block content %}
+<section class="page-head"><h2>Bug Analysis</h2>
+<p>Every failed test with expected vs actual result, severity, category, screenshot and a suggested fix.</p></section>
+{% if runs %}<form method="get" class="inline">
+  <label>Run
+    <select name="run" onchange="this.form.submit()">
+      {% for r in runs %}<option value="{{ r['id'] }}" {{ 'selected' if r['id'] == run_id }}>#{{ r['id'] }} · {{ r['started_at'] }}</option>{% endfor %}
+    </select></label>
+</form>{% endif %}
+{% if not runs %}<div class="card empty">No finished runs yet. Go to <a href="{{ url_for('execute') }}">Test Execution</a> and run the tests — failures appear here with analysis.</div>
+{% elif not failures %}<div class="card empty">No failures in run #{{ run_id }}. 🎉</div>
+{% else %}
+<p class="muted">AI/rule-based suggestions are hypotheses to investigate, not confirmed diagnoses.</p>
+{% for f in failures %}{{ failure_card(f) }}{% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    ports: ["5000:5000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:5000/api/health')"]
+      interval: 3s
+      retries: 10
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
+    ports: ["4444:4444"]
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    profiles: ["test"]          # run with: docker compose --profile test up --exit-code-from tests
+    depends_on:
+      app: {condition: service_healthy}
+      selenium: {condition: service_started}
+    environment:
+      BASE_URL: http://app:5000
+      SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+    volumes:
+      - ./reports:/srv/reports

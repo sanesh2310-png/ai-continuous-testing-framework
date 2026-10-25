@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Dashboard - QA Dashboard{% endblock %}
+{% block content %}
+<section class="hero {{ '' if not run else ('ok' if run['failed'] == 0 else 'bad') }}">
+  <div>
+    <h2>QA Dashboard</h2>
+    <p>{% if running %}A test run is in progress…
+       {% elif not run %}No test runs yet. Run the suite to see live results here.
+       {% elif run['failed'] == 0 %}✅ All {{ run['total'] }} tests passed in run #{{ run['id'] }} ({{ run['started_at'] }}).
+       {% else %}❌ {{ run['failed'] }} of {{ run['total'] }} tests failed in run #{{ run['id'] }} ({{ run['started_at'] }}).{% endif %}
+       {% if run and run['bugs'] %}<span class="chip">defects simulated</span>{% endif %}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn light" href="{{ url_for('generate') }}">Generate test cases</a>
+    <form method="post" action="/run" class="inline">
+      <input type="hidden" name="scope" value="api"><input type="hidden" name="browser" value="{{ browser }}">
+      <button class="btn light" {% if running %}disabled{% endif %}>Run API tests</button></form>
+    <form method="post" action="/run" class="inline">
+      <input type="hidden" name="scope" value="all"><input type="hidden" name="browser" value="{{ browser }}">
+      <button class="btn solid" {% if running %}disabled{% endif %}>{{ 'Running…' if running else 'Run all tests' }}</button></form>
+  </div>
+</section>
+
+<div class="metrics">
+  <div class="metric"><i class="mi blue">🧪</i><div><span>Total Test Cases</span><b>{{ run['total'] if run else '—' }}</b></div></div>
+  <div class="metric"><i class="mi green">✔</i><div><span>Passed Tests</span><b class="g">{{ run['passed'] if run else '—' }}</b></div></div>
+  <div class="metric"><i class="mi red">✖</i><div><span>Failed Tests</span><b class="r">{{ run['failed'] if run else '—' }}</b></div></div>
+  <div class="metric"><i class="mi amber">⏭</i><div><span>Skipped Tests</span><b class="a">{{ run['skipped'] if run else '—' }}</b></div></div>
+  <div class="metric"><i class="mi violet">%</i><div><span>Test Pass Rate</span><b>{{ pass_rate|pct if run else '—' }}</b></div></div>
+  <div class="metric" title="Approved test cases converted to executable scripts ÷ all approved test cases">
+    <i class="mi teal">⚙</i><div><span>Automation Coverage</span><b>{{ ('%.0f%%'|format(coverage)) if coverage is not none else '—' }}</b>
+    <small>{{ automated }} of {{ approved }} approved cases automated</small></div></div>
+  <div class="metric"><i class="mi slate">🔄</i><div><span>CI/CD Pipeline</span>
+    <b class="txt {{ 'g' if latest_pipe == 'Success' else 'r' if latest_pipe == 'Failed' else '' }}">{% if not pipeline.configured %}Not connected{% elif pipeline.error %}Unavailable{% else %}{{ latest_pipe or 'No runs yet' }}{% endif %}</b>
+    <small><a href="{{ url_for('pipeline') }}">{{ 'view stages' if pipeline.configured else 'connect GitHub' }}</a></small></div></div>
+</div>
+{% if run %}<div class="progress" title="Pass rate"><div style="width:{{ pass_rate }}%"></div></div>{% endif %}
+
+{% if pipeline.configured and pipeline.jobs %}
+<div class="card"><h3>Latest pipeline run — {{ pipeline.repo }}</h3>
+  <div class="stages">{% for j in pipeline.jobs %}
+    <div class="stage {{ j.label|lower }}"><b>{{ j.name }}</b>{{ badge(j.label) }}</div>
+    {% if not loop.last %}<span class="arrow">→</span>{% endif %}{% endfor %}</div></div>
+{% endif %}
+
+<div class="grid2">
+  <div class="card">
+    <h3>Recent failures</h3>
+    {% if failures %}
+    <table><tr><th>ID</th><th>Test</th><th>Severity</th></tr>
+      {% for f in failures %}<tr><td>{{ f.tc_id }}</td><td>{{ f.name }}</td><td>{{ badge(f.severity) }}</td></tr>{% endfor %}
+    </table><p><a href="{{ url_for('bugs') }}">Open bug analysis →</a></p>
+    {% else %}<p class="muted">{{ 'No failures in the latest run.' if run else 'Nothing to show yet — run the tests first.' }}</p>{% endif %}
+  </div>
+  <div class="card">
+    <h3>Test execution history</h3>
+    {% if history %}
+    <table><tr><th>Run</th><th>When</th><th>Pass</th><th>Fail</th><th>Rate</th></tr>
+      {% for h in history %}<tr><td><a href="{{ url_for('execute', run=h['id']) }}">#{{ h['id'] }}</a></td><td>{{ h['started_at'] }}</td>
+        <td>{{ h['passed'] }}</td><td>{{ h['failed'] }}</td><td>{{ pct_of(h['passed'], h['total'])|pct }}</td></tr>{% endfor %}
+    </table>
+    {% else %}<p class="muted">No runs yet.</p>{% endif %}
+  </div>
+</div>
+
+<div class="card"><h3>System status</h3>
+  <ul class="checks">{% for level, title, text in checks %}
+    <li class="{{ level }}"><i>{{ '✔' if level == 'ok' else 'ℹ' if level == 'info' else '!' }}</i><b>{{ title }}</b><span>{{ text }}</span></li>{% endfor %}
+  </ul></div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}CI/CD Pipeline - QA Dashboard{% endblock %}
+{% block content %}
+<section class="page-head"><h2>CI/CD Pipeline</h2>
+<p>Every <code>git push</code> makes GitHub Actions build the app, run the API and UI tests, and deploy only if they pass.
+This page shows the real status from GitHub.</p></section>
+
+{% macro push_steps(repo) %}
+<pre>git init
+git add .
+git commit -m "QA automation framework"
+git branch -M main
+git remote add origin https://github.com/{{ repo or 'YOUR-USERNAME/YOUR-REPO' }}.git
+git push -u origin main</pre>
+{% endmacro %}
+
+{% if not p.configured %}
+<div class="card">
+  <h3>Step 1 — Connect your GitHub repository</h3>
+  <form method="post" action="/pipeline/connect" class="connect">
+    <label>Repository <input name="repo" placeholder="your-username/your-repo  or  https://github.com/your-username/your-repo" required></label>
+    <label>Token <span class="muted">(optional — only for private repositories)</span>
+      <input name="token" type="password" placeholder="ghp_…"></label>
+    <button class="btn primary">Connect</button>
+  </form>
+  <p class="muted">The repository is checked against GitHub before it is saved (to the <code>.env</code> file in your project folder).
+  If this project is already pushed to GitHub, the dashboard connects automatically after a restart.</p>
+</div>
+<div class="card">
+  <h3>Step 2 — Push the project to that repository</h3>
+  <p class="muted">The workflow file <code>.github/workflows/ci.yml</code> is already in the project. Run in the project folder:</p>
+  {{ push_steps(None) }}
+  <p class="muted">Then open the repository's <b>Actions</b> tab — the pipeline starts by itself, and the stages appear here.</p>
+</div>
+{% else %}
+<div class="repo-bar">
+  <div><b>{{ p.repo }}</b> <span class="muted">· connected {{ 'from the git remote' if p.source == 'git' else 'from settings' }}</span></div>
+  <div>
+    <a class="btn" href="{{ p.actions_url }}" target="_blank">Open Actions on GitHub</a>
+    {% if p.source == 'settings' %}<form method="post" action="/pipeline/disconnect" class="inline"><button class="btn danger">Disconnect</button></form>{% endif %}
+  </div>
+</div>
+{% if p.error %}<div class="flash error">{{ p.error }}</div>
+  <div class="card"><h3>Connect with a token</h3>
+    <form method="post" action="/pipeline/connect" class="connect">
+      <label>Repository <input name="repo" value="{{ p.repo }}" required></label>
+      <label>Token <input name="token" type="password" placeholder="ghp_…"></label>
+      <button class="btn primary">Reconnect</button></form></div>
+{% elif not p.runs %}
+<div class="card">
+  <h3>Connected — no pipeline runs yet</h3>
+  <p class="muted">Push the project to {{ p.repo }} to start the first run. In the project folder:</p>
+  {{ push_steps(p.repo) }}
+  <p class="muted">The workflow file <code>.github/workflows/ci.yml</code> must be included in the push.</p>
+</div>
+{% else %}
+<div class="metrics small">
+  <div class="metric"><i class="mi slate">🔄</i><div><span>Latest run</span><b class="{{ 'g' if p.runs[0].label == 'Success' else 'r' if p.runs[0].label == 'Failed' else '' }}">{{ p.runs[0].label }}</b></div></div>
+  <div class="metric"><i class="mi green">%</i><div><span>Success rate</span><b>{{ (p.success_rate ~ '%') if p.success_rate is not none else '—' }}</b><small>last completed runs</small></div></div>
+  <div class="metric"><i class="mi blue">#</i><div><span>Runs shown</span><b>{{ p.runs|length }}</b></div></div>
+</div>
+<div class="card" {% if p.active %}id="autorefresh" data-seconds="10"{% endif %}>
+  <h3>Pipeline stages {% if p.selected %}<span class="muted">· run #{{ (p.runs|selectattr('id', 'equalto', p.selected)|first).number }}</span>{% endif %}</h3>
+  <div class="stages">
+  {% for j in p.jobs %}
+    <div class="stage {{ j.label|lower }}"><b>{{ j.name }}</b>{{ badge(j.label) }}
+      <ul>{% for s in j.steps %}<li class="{{ s.label|lower }}">{{ s.name }}</li>{% endfor %}</ul></div>
+    {% if not loop.last %}<span class="arrow">→</span>{% endif %}
+  {% endfor %}
+  </div>
+  <p class="muted">“Blocked” means the job was skipped because an earlier stage failed — for example deployment is blocked when tests fail.
+  {% if p.active %}This page refreshes while a run is in progress.{% endif %}</p>
+</div>
+<div class="card">
+  <h3>Recent workflow runs</h3>
+  <table><tr><th>#</th><th>Status</th><th>Commit</th><th>Branch</th><th>Trigger</th><th>When (UTC)</th><th></th></tr>
+    {% for r in p.runs %}<tr><td>{{ r.number }}</td><td>{{ badge(r.label) }}</td><td><code>{{ r.sha }}</code> {{ r.message }}</td>
+      <td>{{ r.branch }}</td><td>{{ r.event }}</td><td>{{ r.created }}</td>
+      <td><a href="{{ url_for('pipeline', run=r.id) }}">stages</a> · <a href="{{ r.url }}" target="_blank">GitHub ↗</a></td></tr>{% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

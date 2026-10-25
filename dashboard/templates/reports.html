@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Reports & Analytics - QA Dashboard{% endblock %}
+{% block content %}
+<section class="page-head"><h2>Reports &amp; Analytics</h2>
+<p>Quality trends across builds, most frequent failures, regressions and downloadable reports.</p></section>
+{% if not latest %}<div class="card empty">No finished runs yet. Run the tests to see analytics.</div>
+{% else %}
+{% set p = pct_of(latest['passed'], latest['total']) %}
+{% set f = pct_of(latest['failed'], latest['total']) %}
+<div class="grid2">
+  <div class="card"><h3>Pass / fail distribution (run #{{ latest['id'] }})</h3>
+    <div class="donut" style="background:conic-gradient(#2e9e5b 0 {{ p }}%, #d64545 {{ p }}% {{ p + f }}%, #b9b9b9 {{ p + f }}% 100%)"></div>
+    <p class="legend"><i class="g"></i>Passed {{ latest['passed'] }} <i class="r"></i>Failed {{ latest['failed'] }} <i class="s"></i>Skipped {{ latest['skipped'] }}</p>
+    <a class="btn" href="{{ url_for('download_report', run_id=latest['id']) }}">Download HTML report</a>
+    <span class="muted">Open it and use Print → Save as PDF for a PDF.</span></div>
+  <div class="card"><h3>Pass rate by build</h3>
+    <div class="bars">{% for r in runs %}{% set rate = pct_of(r['passed'], r['total']) %}
+      <div class="bar"><span class="val">{{ '%.0f'|format(rate) }}%</span><div class="fill" style="height:{{ rate }}%"></div><span class="lbl">#{{ r['id'] }}</span></div>{% endfor %}</div></div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Build comparison</h3>
+    <table><tr><th>Build</th><th>Passed</th><th>Failed</th><th>Pass rate</th><th>Duration</th></tr>
+      {% for r in runs|reverse %}<tr><td>#{{ r['id'] }}</td><td>{{ r['passed'] }}</td><td>{{ r['failed'] }}</td>
+        <td>{{ pct_of(r['passed'], r['total'])|pct }}</td><td>{{ r['duration'] }}s</td></tr>{% endfor %}</table></div>
+  <div class="card"><h3>Most frequently failing tests</h3>
+    {% if frequent %}<table><tr><th>ID</th><th>Test</th><th>Failures</th></tr>
+      {% for t in frequent %}<tr><td>{{ t.tc_id }}</td><td>{{ t.name }}</td><td>{{ t.n }}</td></tr>{% endfor %}</table>
+    {% else %}<p class="muted">No failures recorded.</p>{% endif %}
+    <h3>Execution duration</h3>
+    <div class="bars small">{% set mx = (runs|map(attribute='duration')|max) or 1 %}{% for r in runs %}
+      <div class="bar"><span class="val">{{ r['duration'] }}s</span><div class="fill blue" style="height:{{ 100 * r['duration'] / mx }}%"></div><span class="lbl">#{{ r['id'] }}</span></div>{% endfor %}</div></div>
+</div>
+<div class="grid2">
+  <div class="card"><h3>Regression results</h3>
+    {% if reg %}<p class="muted">Run #{{ latest['id'] }} compared with run #{{ reg.previous }} (same scope)</p>
+      <p><b>New failures:</b> {{ reg.regressions|join(', ') or 'none' }}</p>
+      <p><b>Fixed:</b> {{ reg.fixed|join(', ') or 'none' }}</p>
+      <p><b>Still failing:</b> {{ reg.still_failing|join(', ') or 'none' }}</p>
+    {% else %}<p class="muted">Needs at least two finished runs with the same scope.</p>{% endif %}</div>
+  <div class="card"><h3>Pipeline success rate</h3>
+    {% if pipeline.configured and not pipeline.error and pipeline.success_rate is not none %}
+      <p class="big">{{ pipeline.success_rate }}%</p><p class="muted">Last 10 completed GitHub Actions runs</p>
+    {% else %}<p class="muted">Connect GitHub on the <a href="{{ url_for('pipeline') }}">CI/CD Pipeline</a> page to see this.</p>{% endif %}</div>
+</div>
+{% endif %}
+{% endblock %}
