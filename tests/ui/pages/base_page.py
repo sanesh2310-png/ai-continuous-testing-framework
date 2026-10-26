@@ -1,3 +1,4 @@
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -7,7 +8,7 @@ class BasePage:
     def __init__(self, driver, base_url):
         self.driver = driver
         self.base_url = base_url.rstrip("/")
-        self.wait = WebDriverWait(driver, 10)
+        self.wait = WebDriverWait(driver, 15, ignored_exceptions=(StaleElementReferenceException,))
 
     def open(self, path=""):
         self.driver.get(f"{self.base_url}{path}")

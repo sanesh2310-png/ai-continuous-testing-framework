@@ -27,7 +27,9 @@ def base_url():
     if external:
         yield external
         return
-    server = make_server("127.0.0.1", 0, create_app({"TESTING": True}))
+    # threaded=True matters: Chrome opens idle speculative connections that would
+    # otherwise block a single-threaded server and make pages hang.
+    server = make_server("127.0.0.1", 0, create_app({"TESTING": True}), threaded=True)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_port}"
     server.shutdown()

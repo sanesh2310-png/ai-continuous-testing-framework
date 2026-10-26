@@ -43,8 +43,13 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     report.case_meta = _meta(item)
     report.screenshot = ""
+    report.page = ""
     drv = item.funcargs.get("driver")
     if drv and report.when == "call" and report.failed:
+        try:
+            report.page = drv.current_url
+        except Exception:
+            pass
         shots = Path(os.environ.get("RUN_DIR", "reports")) / "screenshots"
         shots.mkdir(parents=True, exist_ok=True)
         path = shots / (re.sub(r"[^A-Za-z0-9_.-]+", "_", item.name) + ".png")
@@ -73,6 +78,8 @@ def pytest_runtest_logreport(report):
         first = message.splitlines()[0] if message else ""
         actual = re.sub(r"^\w*(Error|Exception):\s*", "", first) or first
         reason = f"{first[:160]}" + (f" (at {Path(crash.path).name}:{crash.lineno})" if crash else "")
+        if getattr(report, "page", ""):
+            reason += f" [browser was on {report.page}]"
         if report.when == "setup":
             meta["category"] = "Environment"
     elif report.skipped:

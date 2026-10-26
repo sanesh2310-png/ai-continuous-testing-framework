@@ -6,4 +6,4 @@ COPY shop ./shop
 ENV DB_PATH=/data/app.db PORT=5000
 RUN mkdir -p /data
 EXPOSE 5000
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT} 'shop.app:create_app()'"]
+CMD ["sh", "-c", "gunicorn --workers 2 --threads 4 -b 0.0.0.0:${PORT} 'shop.app:create_app()'"]
