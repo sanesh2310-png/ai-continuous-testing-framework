@@ -1,3 +1,5 @@
+![CI](https://github.com/sanesh2310-png/ai-continuous-testing-framework/actions/workflows/ci.yml/badge.svg)
+
 # Intelligent Continuous Testing Framework for Web Applications Using AI and CI/CD
 
 A QA platform that **generates test cases from requirements (AI), runs automated UI + API tests,
