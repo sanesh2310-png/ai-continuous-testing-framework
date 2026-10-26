@@ -1,6 +1,7 @@
 body{font-family:system-ui,sans-serif;max-width:680px;margin:2rem auto;padding:0 1rem;color:#222}
 header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ddd;flex-wrap:wrap}
-nav a,nav span{margin-left:1rem;font-size:.9rem}
+nav a,nav>span{margin-left:1rem;font-size:.9rem}
+nav a{display:inline-block}
 label{display:block;margin-top:.75rem}
 input{padding:.4rem;width:100%;box-sizing:border-box}
 form.inline{display:inline}form.inline input{width:60%}
