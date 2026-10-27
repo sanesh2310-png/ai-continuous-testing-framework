@@ -51,7 +51,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12", cache: pip}
-      - run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt waitress pytest-rerunfailures
       - name: Selenium UI tests (headless Chrome is preinstalled on the runner)
         run: pytest tests/ui -q --reruns 2 --reruns-delay 2 --junitxml=reports/ui-junit.xml --alluredir=reports/allure-results
         env:

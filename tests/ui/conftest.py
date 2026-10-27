@@ -14,7 +14,7 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from waitress.server import create_server
+from werkzeug.serving import make_server
 
 from shop.app import TEST_EMAIL, TEST_PASSWORD, create_app
 from tests.ui.pages.base_page import BasePage
@@ -27,12 +27,20 @@ def base_url():
     if external:
         yield external
         return
-    # waitress is a production-grade multi-threaded server: it copes with the many
-    # parallel / idle connections browsers open, which the Flask dev server does not.
-    server = create_server(create_app({"TESTING": True}), host="127.0.0.1", port=0, threads=8)
-    threading.Thread(target=server.run, daemon=True).start()
-    yield f"http://127.0.0.1:{server.effective_port}"
-    server.close()
+    app = create_app({"TESTING": True})
+    try:
+        # waitress is a production-grade multi-threaded server: it copes with the many
+        # parallel / idle connections browsers open.
+        from waitress.server import create_server
+        server = create_server(app, host="127.0.0.1", port=0, threads=8)
+        threading.Thread(target=server.run, daemon=True).start()
+        yield f"http://127.0.0.1:{server.effective_port}"
+        server.close()
+    except ImportError:  # fall back to the Flask dev server (threaded so idle connections cannot block it)
+        server = make_server("127.0.0.1", 0, app, threaded=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        yield f"http://127.0.0.1:{server.server_port}"
+        server.shutdown()
 
 
 def _options():
