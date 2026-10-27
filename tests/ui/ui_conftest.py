@@ -14,7 +14,7 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from werkzeug.serving import make_server
+from waitress.server import create_server
 
 from shop.app import TEST_EMAIL, TEST_PASSWORD, create_app
 from tests.ui.pages.base_page import BasePage
@@ -27,19 +27,20 @@ def base_url():
     if external:
         yield external
         return
-    # threaded=True matters: Chrome opens idle speculative connections that would
-    # otherwise block a single-threaded server and make pages hang.
-    server = make_server("127.0.0.1", 0, create_app({"TESTING": True}), threaded=True)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{server.server_port}"
-    server.shutdown()
+    # waitress is a production-grade multi-threaded server: it copes with the many
+    # parallel / idle connections browsers open, which the Flask dev server does not.
+    server = create_server(create_app({"TESTING": True}), host="127.0.0.1", port=0, threads=8)
+    threading.Thread(target=server.run, daemon=True).start()
+    yield f"http://127.0.0.1:{server.effective_port}"
+    server.close()
 
 
 def _options():
     opts = Options()
     if not os.environ.get("HEADED"):
         opts.add_argument("--headless=new")
-    for arg in ("--no-sandbox", "--disable-dev-shm-usage", "--window-size=1280,900"):
+    for arg in ("--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-extensions",
+                "--disable-background-networking", "--window-size=1280,900"):
         opts.add_argument(arg)
     return opts
 

@@ -61,6 +61,8 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_runtest_logreport(report):
+    if report.outcome == "rerun":      # pytest-rerunfailures: attempt will be retried
+        return
     interesting = report.when == "call" or (report.when == "setup" and report.outcome != "passed")
     if not interesting or not hasattr(report, "case_meta"):
         return
